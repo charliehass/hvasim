@@ -84,8 +84,6 @@ settings = {
             "tau_F2": None,
             "w_e": 0,  # no recurrent effect of SOM onto HVA_PY
             "w_i": 0,  # no recurrent effect of SOM onto HVA_PY
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -103,8 +101,6 @@ settings = {
             "tau_F2": None,
             "w_e": 0,  # no recurrent effect of SOM onto HVA_PY
             "w_i": 0,  # no recurrent effect of SOM onto HVA_PY
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -122,8 +118,6 @@ settings = {
             "tau_F2": 1000,
             "w_e": 10,
             "w_i": 0,
-            "tau_e": 0.0001,
-            "tau_i": 0.0001,
             "delay": 0
         },
 
@@ -141,8 +135,6 @@ settings = {
             "tau_F2": 1000,
             "w_e": 5,
             "w_i": 0,
-            "tau_e": 0.001,
-            "tau_i": 0.001,
             "delay": 0
         },
 
@@ -160,8 +152,6 @@ settings = {
             "tau_F2": 100,
             "w_e": 1,
             "w_i": 0,
-            "tau_e": 0.001,
-            "tau_i": 0.001,
             "delay": 0
         }
     },

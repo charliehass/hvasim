@@ -17,23 +17,24 @@ from hvasim import run_simulations
 #######################################
 # USER-DEFINE: THE SIMULATION SETTINGS
 # import YYYYYY as sim_settings (YYYYY = sim_settings module name)
-import settings_default as sim_settings
+import settings_sim_ff_hva_only as sim_settings
 
 
 ######################################
 # USER-DEFINE: ENTER A  DESCRIPTION  #
 ######################################
-description = """ Using the default settings file to explore the
-dependence of STP on modulation rate for different types of afferent synapses
-(PY->PY, PY->FS, PY->SOM).
+description = """
+Trying to make a simulation with just FF excitation onto PY cells in the
+medial and lateral HVAs. Taking params from my in vitro data set.
 
-The interneurons in the HVA do not contact the PY cells (p_connect=0)
+This is just a test file to see if the simulation is broken.
 """
 
 ########################################
 # USER-DEFINE: PATH TO DATA DIRECTORY  #
 ########################################
-dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
+# dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
+dat_path = "/home/charlie/Desktop/hva_sim_data"
 
 ###################################
 # DON'T MESS WITH THE STUFF BELOW #

@@ -29,6 +29,18 @@ process:
 import copy
 
 
+def create_run_settings_no_enforce(settings_sim):
+
+    # simply copy the sim_settings dict
+    run_settings = settings_sim.copy()
+
+    # find any param values that are type=list, return the dpath
+    list_dpaths = find_param_lists(run_settings)
+
+    # return the run_settings dictionary
+    return list_dpaths, run_settings
+
+
 def create_run_settings(settings_default, settings_sim):
 
     # override default values with non-None vals in settings_sim

@@ -7,7 +7,7 @@ import os
 import time
 
 # import from within this codebase
-from make_run_settings import create_run_settings
+from make_run_settings import create_run_settings_no_enforce
 import settings_default
 
 
@@ -25,12 +25,10 @@ def run_simulations(sim_settings, description, dat_path):
     sim_data_path = make_data_directory(dat_path)
     print("Saving to: {}".format(sim_data_path))
 
-    # load the default settings, override with the sim_settings where present
-    (list_path, run_settings) = create_run_settings(settings_default.settings,
-                                                    sim_settings)
-
     # loop over params in the list and run the simulation
     try:
+        # load the default settings, override with the sim_settings where present
+        (list_path, run_settings) = create_run_settings_no_enforce(sim_settings)
         if len(list_path) == 0:
             loop_settings = run_settings.copy()
             run_net_and_save(loop_settings, description, sim_data_path, 1)
@@ -258,6 +256,7 @@ def create_synapses(synapse_params, neurons):
         created_syns[-1].D2 = 1
         created_syns[-1].F1 = 1
         created_syns[-1].F2 = 1
+        # TODO: Add the synaptic delay
 
     return created_syns
 

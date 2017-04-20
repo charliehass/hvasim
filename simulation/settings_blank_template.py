@@ -75,8 +75,6 @@ settings = {
             "tau_F2": None,
             "w_e": None,
             "w_i": None,
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -94,8 +92,6 @@ settings = {
             "tau_F2": None,
             "w_e": None,
             "w_i": None,
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -113,8 +109,6 @@ settings = {
             "tau_F2": None,
             "w_e": None,
             "w_i": None,
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -132,8 +126,6 @@ settings = {
             "tau_F2": None,
             "w_e": None,
             "w_i": None,
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         },
 
@@ -151,8 +143,6 @@ settings = {
             "tau_F2": None,
             "w_e": None,
             "w_i": None,
-            "tau_e": None,
-            "tau_i": None,
             "delay": None
         }
     },
