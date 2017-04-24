@@ -17,24 +17,23 @@ from hvasim import run_simulations
 #######################################
 # USER-DEFINE: THE SIMULATION SETTINGS
 # import YYYYYY as sim_settings (YYYYY = sim_settings module name)
-import settings_sim_ff_hva_only as sim_settings
+import settings_test_stp_with_real_params as sim_settings
 
 
 ######################################
 # USER-DEFINE: ENTER A  DESCRIPTION  #
 ######################################
 description = """
-Trying to make a simulation with just FF excitation onto PY cells in the
-medial and lateral HVAs. Taking params from my in vitro data set.
-
-This is just a test file to see if the simulation is broken.
+Testing out the HVA simulation.
+* Re-testing the STP with params that came from the fit of the average
+  data. Average across all cells.
 """
 
 ########################################
 # USER-DEFINE: PATH TO DATA DIRECTORY  #
 ########################################
-# dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
-dat_path = "/home/charlie/Desktop/hva_sim_data"
+dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
+# dat_path = "/home/charlie/Desktop/hva_sim_data"
 
 ###################################
 # DON'T MESS WITH THE STUFF BELOW #

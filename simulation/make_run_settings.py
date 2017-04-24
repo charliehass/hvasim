@@ -104,7 +104,7 @@ def find_param_lists_dict_walker(runtime_dict, dpath_list=None, addr=None):
         # print('/n')
 
         for key in runtime_dict.keys():
-            addr.append(key)  # add to the address when you dive into a key
+            addr.append(str(key))  # add to the address entering a dict key
             val_type = type(runtime_dict[key])
             assert val_type is not tuple, "ERROR: tuple type not supported"
 

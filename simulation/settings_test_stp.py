@@ -19,14 +19,14 @@
 
 """
 
-from equations import synapse_eqs, onspike_eqs
+from equations import neuron_eqs, synapse_eqs, onspike_eqs, sinusoid_rate
 
 
 settings = {
     "neurons": {
         "HVA_PY": {
             "N": 1,
-            "eqs": None,
+            "eqs": neuron_eqs,
             "tau_m": 0.030,
             "tau_e": 0.002,
             "tau_i": 0.010,
@@ -37,7 +37,7 @@ settings = {
         },
         "FS": {
             "N": 1,
-            "eqs": None,
+            "eqs": neuron_eqs,
             "tau_m": 0.030,
             "tau_e": 0.002,
             "tau_i": 0.010,
@@ -48,7 +48,7 @@ settings = {
         },
         "SOM": {
             "N": 1,
-            "eqs": None,
+            "eqs": neuron_eqs,
             "tau_m": 0.030,
             "tau_e": 0.002,
             "tau_i": 0.010,
@@ -65,45 +65,11 @@ settings = {
         "modulation_rate": None,
         "peak_rate": None,
         "spikes_per_second": [1, 10, 50, 100],  # pulse train frequencies
-        "eqs": None,
+        "eqs": sinusoid_rate,
         "sim_time": 2
     },
 
     "synapses": {
-        ("SOM", "HVA_PY"): {
-            "eqs": None,
-            "on_spike": None,
-            "p_connect": 0,
-            "d1": None,
-            "d2": None,
-            "f1": None,
-            "f2": None,
-            "tau_D1": None,
-            "tau_D2": None,
-            "tau_F1": None,
-            "tau_F2": None,
-            "w_e": 0,  # no recurrent effect of SOM onto HVA_PY
-            "w_i": 0,  # no recurrent effect of SOM onto HVA_PY
-            "delay": None
-        },
-
-        ("FS", "HVA_PY"): {
-            "eqs": None,
-            "on_spike": None,
-            "p_connect": 0,
-            "d1": None,
-            "d2": None,
-            "f1": None,
-            "f2": None,
-            "tau_D1": None,
-            "tau_D2": None,
-            "tau_F1": None,
-            "tau_F2": None,
-            "w_e": 0,  # no recurrent effect of SOM onto HVA_PY
-            "w_i": 0,  # no recurrent effect of SOM onto HVA_PY
-            "delay": None
-        },
-
         ("afferents", "HVA_PY"): {
             "eqs": synapse_eqs,
             "on_spike": onspike_eqs,

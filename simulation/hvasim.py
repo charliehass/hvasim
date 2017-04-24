@@ -27,7 +27,7 @@ def run_simulations(sim_settings, description, dat_path):
 
     # loop over params in the list and run the simulation
     try:
-        # load the default settings, override with the sim_settings where present
+        # load default settings, override with the sim_settings where present
         (list_path, run_settings) = create_run_settings_no_enforce(sim_settings)
         if len(list_path) == 0:
             loop_settings = run_settings.copy()
@@ -117,22 +117,23 @@ def create_network(settings_modified):
     synapse_list = create_synapses(settings_modified["synapses"], neuron_list)
     net.add(synapse_list)
 
-    monitor_list = create_state_monitors(settings_modified["monitors"],
-                                         neuron_list)
+    monitor_list = create_monitors(settings_modified["monitors"], neuron_list)
     net.add(monitor_list)
     return net
 
 
 def find_neuron_with_name(neuron_array, str_name):
     """
-    Find neuron in a list of neurons with a certain name
-    Useful for when making synapses
+    Return a single neuron object from a list of neuron objects.
+    Locates a neuron-object with a specific name.
     """
+    found_neuron = None
     for n in neuron_array:
         if n.name == str_name:
-            return n
-    print("Neuron not in this list")
-    return None
+            found_neuron = n
+
+    assert found_neuron is not None, "ERROR: neuron object was not located"
+    return found_neuron
 
 
 def create_neurons(neuron_params):
@@ -165,8 +166,8 @@ def create_neurons(neuron_params):
         neuron_list[i].tau_i_model = vals["tau_i"] * brian.second
         neuron_list[i].V = v_init * brian.volt
         neuron_list[i].V0 = v_init * brian.volt
-        neuron_list[i].Ve = -0.0 * brian.volt
-        neuron_list[i].Vi = -0.090 * brian.volt
+        neuron_list[i].Ve = -0.000 * brian.volt
+        neuron_list[i].Vi = -0.075 * brian.volt
 
         i += 1
     return neuron_list
@@ -227,6 +228,7 @@ def create_synapses(synapse_params, neurons):
     for syn in synapse_params.keys():
         # create the synapse and give it a name
         variables = synapse_params[syn]
+        print(syn)
         pre_neuron_name = syn[0]  # key is tuple (pre, post)
         pre_neuron = find_neuron_with_name(neurons, pre_neuron_name)
         post_neuron_name = syn[1]
@@ -261,27 +263,33 @@ def create_synapses(synapse_params, neurons):
     return created_syns
 
 
-def create_state_monitors(monitor_params, neuron_list):
+def create_monitors(monitor_params, neuron_list):
     """
     Returns a list of monitors initialized with values specified in params
     settings["monitors"] should be passed in as the argument, with the same
     set up as exemplified in chance_abbott_sim_settings.py
     """
 
-    mons = []
-    for key, val in monitor_params.items():
-        neuron = find_neuron_with_name(neuron_list, key)
+    monitors = []
+    for neuron_name, mon_string in monitor_params.items():
+        neuron = find_neuron_with_name(neuron_list, neuron_name)
 
-        if val == "spikes":
-            mons.append(brian.SpikeMonitor(neuron, name="afferent_spike_mon"))
-        else:
-            v = val.split()
-            for variable in v:
-                tmp_name = "{}_{}_mon".format(key, variable)
-                mons.append(brian.StateMonitor(neuron,
-                                               variable,
-                                               record=True,
-                                               name=tmp_name
-                                               ))
+        mon_types = mon_string.split()
+        for mon in mon_types:
+            if mon == "spikes":
+                mon_name = "{}_spike_mon".format(neuron_name)
+                monitors.append(brian.SpikeMonitor(neuron,
+                                                   name=mon_name))
+            elif mon == "rate":
+                mon_name = "{}_rate_mon".format(neuron_name)
+                monitors.append(brian.PopulationRateMonitor(neuron,
+                                                            name=mon_name))
+            else:
+                tmp_name = "{}_{}_mon".format(neuron_name, mon)
+                monitors.append(brian.StateMonitor(neuron,
+                                                   mon,
+                                                   record=True,
+                                                   name=tmp_name
+                                                   ))
 
-    return mons
+    return monitors

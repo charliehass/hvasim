@@ -1,20 +1,14 @@
+"""Analysis routines for the hva simulation.
+"""
 
-from brian2tools import *
 import matplotlib.pyplot as plt
-from create_network import create_network
-from chance_abbott_sim_settings import settings
-from run_simulation import *
-from create_network_functions import visualise_connectivity
+import os
+import numpy as np
 import dill as pickle
-import math
-
-########################################################################
-# this file will be used to plot and compute various analyses of the data
-# from pickled networks
-########################################################################
+import brian2 as brian
 
 
-def unpickle_net(pickle_file):
+def unpickle(pickle_file):
     """
     Unpickle a file and return its contents a mega-dictionary
     of all the monitored states during that run
@@ -24,200 +18,214 @@ def unpickle_net(pickle_file):
     return net
 
 
-def plot_everything(filenames, neuron_index=0):
+def load_all_files(file_names, simulations_directory):
     """
-    Plots voltage, excitatory conductance and/or inhibitory conductance
-    from HVA_PY, SOM, and FS cells
-    Plots values from neuron 0 by default
+    Plot a summary figure of the simmulation (all the files).
+    But specify which monitor should be plotted.
+    Vm, Ge, Gi can all be plotted
     """
-    f, axs = plt.subplots(len(filenames), 3)
-    axs[0,0].set_title("HVA PY currents")
-    axs[0,1].set_title("FS currents")
-    axs[0,2].set_title("SOM currents")
-    for i,f in enumerate(filenames):
-        net = unpickle_net(f)
-        # print(net.keys())
-        # print(net['afferent_spike_mon'])
-        hva_v_mon = [x[neuron_index] for x in net['HVA_PY_V_mon']['V']]
-        fs_v_mon = [x[neuron_index] for x in net['FS_V_mon']['V']]
-        som_v_mon = [x[neuron_index] for x in net['SOM_V_mon']['V']]
-        hva_t_mon = net['HVA_PY_V_mon']['t']
-        fs_t_mon = net['FS_V_mon']['t']
-        som_t_mon = net['SOM_V_mon']['t']
-        hva_ge_mon = [x[neuron_index] for x in net['HVA_PY_Ge_total_mon']['Ge_total']]
-        fs_ge_mon = [x[neuron_index] for x in net['FS_Ge_total_mon']['Ge_total']]
-        som_ge_mon = [x[neuron_index] for x in net['SOM_Ge_total_mon']['Ge_total']]
-        hva_gi_mon = [x[neuron_index] for x in net['HVA_PY_Gi_total_mon']['Gi_total']]
-        fs_gi_mon = [x[neuron_index] for x in net['FS_Gi_total_mon']['Gi_total']]
-        som_gi_mon = [x[neuron_index] for x in net['SOM_Gi_total_mon']['Gi_total']]
-        # axs[i,0].plot(hva_t_mon/ms, hva_v_mon, 'black')
-        axs[i,0].plot(hva_t_mon/ms, hva_ge_mon, 'red')
-        # axs[i,0].plot(hva_t_mon/ms, hva_gi_mon, 'blue')
 
-        # axs[i,1].plot(fs_t_mon/ms, fs_v_mon, 'black')
-        axs[i,1].plot(fs_t_mon/ms, fs_ge_mon, 'red')
-        # axs[i,1].plot(fs_t_mon/ms, fs_gi_mon, 'blue')
+    alldata = {}
+    for fname in file_names:
+        tmpdat = unpickle(simulations_directory + os.sep + fname)
+        alldata[fname] = {"net": tmpdat["net"],
+                          "settings": tmpdat["settings"],
+                          "description": tmpdat["description"]
+                          }
+    return alldata
 
-        # axs[i,2].plot(som_t_mon/ms, som_v_mon, 'black')
-        axs[i,2].plot(som_t_mon/ms, som_ge_mon, 'red')
-        # axs[i,2].plot(som_t_mon/ms, som_gi_mon, 'blue')
+
+def extract_anlg_monitors(data_dict, mon_type="v"):
+    # define key names for dynamic indexing
+    if mon_type.lower() == "v":
+        mon_suffix = "_V_mon"
+        key_to_data = "V"
+    elif mon_type.lower() == "ge_total":
+        mon_suffix = "_Ge_total_mon"
+        key_to_data = "Ge_total"
+    elif mon_type.lower() == "gi_total":
+        mon_suffix = "_Gi_total_mon"
+        key_to_data = "Gi_total"
+    else:
+        raise Exception("plot type {} not recognized".format(mon_type))
+
+    # store data in dictionary, one for each file
+    monitors = {fname: {} for fname in data_dict.keys()}  # init empty dicts
+    neuron_names = []
+    for fname in data_dict.keys():
+        neuron_groups = data_dict[fname]["settings"]["neurons"].keys()
+        neuron_names.extend(list(neuron_groups))
+
+        for neuron in neuron_groups:
+            mon_name = neuron + mon_suffix
+            net = data_dict[fname]["net"]
+            if mon_name in net.keys():
+                monitors[fname][neuron] = {"dat": net[mon_name][key_to_data],
+                                           "time": net[mon_name]["t"],
+                                           "mon": net[mon_name]
+                                           }
+            else:
+                monitors[fname][neuron] = {"dat": np.array([]),
+                                           "time": np.array([]),
+                                           }
+
+    return monitors, list(set(neuron_names))
+
+
+def extract_spk_monitors(data_dict, binsize=0.025):
+
+    # define key names for dynamic indexing
+    mon_suffix = "_spike_mon"
+
+    # store data in dictionary, one for each file
+    monitors = {fname: {} for fname in data_dict.keys()}  # init empty dicts
+    neuron_names = []
+    for fname in data_dict.keys():
+        neuron_groups = data_dict[fname]["settings"]["neurons"].keys()
+        neuron_names.extend(list(neuron_groups))
+        sim_time = data_dict[fname]['settings']['afferents']['sim_time']
+        for neuron in neuron_groups:
+            mon_name = neuron + mon_suffix
+            net = data_dict[fname]["net"]
+            if mon_name in net.keys():
+                monitors[fname][neuron] = {"spk_t": net[mon_name]["t"],
+                                           "unit_idx": net[mon_name]["i"],
+                                           }
+                psths = spk_mon_to_psth(monitors[fname][neuron],
+                                        binsize,
+                                        sim_time)
+                monitors[fname][neuron]["psth"] = psths
+            else:
+                monitors[fname][neuron] = {"dat": np.array([]),
+                                           "time": np.array([]),
+                                           "psth": {}}
+
+    return monitors, list(set(neuron_names))
+
+
+def spk_mon_to_psth(spk_dict, binsize, total_time):
+
+    # define the binedges
+    edges = np.arange(0, total_time + binsize, binsize)
+
+    # get the outputs ready
+    out_psth = {'rates': [],
+                'unit_idx': [],
+                'edges': edges,
+                'binsize': binsize}
+
+    # compute the psths
+    unit_idxs = set(spk_dict["unit_idx"])
+    for idx in unit_idxs:
+        l_idx = spk_dict["unit_idx"] == idx  # logical array
+        spk_times = spk_dict["spk_t"][l_idx]
+        counts_per_bin, _ = np.histogram(spk_times, edges)
+        rate_per_bin = np.array(counts_per_bin) / binsize
+        out_psth['rates'].append(rate_per_bin)
+        out_psth['unit_idx'].append(idx)
+
+    return out_psth
+
+
+def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
+    """
+    Plot a summary figure of the simmulation for the monitors supplied.
+    """
+
+    fnt_sz = 12
+    N_sim_conds = len(monitors)
+    N_neuron_groups = len(neuron_names)
+    cm = plt.cm.get_cmap('Vega10')
+
+    if plot_type.lower() == "overlay":
+        fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
+    elif plot_type.lower() == "grid":
+        fig, axs = plt.subplots(N_sim_conds, N_neuron_groups, figsize=(25, 25))
+    else:
+        raise "Unknown plot_type"
+
+    for row_idx, sim_type in enumerate(monitors.keys()):
+        for col_idx, neuron_group in enumerate(monitors[sim_type].keys()):
+            tt = monitors[sim_type][neuron_group]['time']
+            yy = monitors[sim_type][neuron_group]['dat']
+            y_units = brian.get_unit(yy)
+            if y_units == brian.units.allunits.steradian3:
+                y_units = "conductance"
+
+            if plot_type.lower() == "overlay":
+                ax = axs[row_idx]
+            else:
+                ax = axs[row_idx, col_idx]
+
+            # plot
+            ax.plot(tt, yy, c=cm.colors[col_idx], label=neuron_group)
+            ax.set_ylabel("monitor ({})".format(y_units), fontsize=fnt_sz)
+            ax.set_xlabel("time (sec)", fontsize=fnt_sz)
+
+            # add y units
+            if y_units == brian.volt:
+                # ax.set_ylim(-0.077, -0.040)
+                pass
+            elif y_units == "conductance":
+                pass
+
+            # add title or legend
+            if plot_type.lower() == "overlay":
+                plt.legend()
+            else:
+                if row_idx == 0:
+                    ax.set_title(neuron_group)
+
     plt.show()
+    return
 
-def extract_presynaptic_spikes(filename, neuron_type, neuron_index, net=None):
+
+def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
     """
-    Extract out presynaptic spike times for a specific neuron index
-    Pass in an already-run network
-    """
-    if net == None:
-        net = unpickle_net(filename)
-    if neuron_type == "FS":
-        S = net['afferents_FS_synapse']
-    if neuron_type == "SOM":
-        S = net['afferents_SOM_synapse']
-    if neuron_type == "HVA_PY":
-        S = net['afferents_HVA_PY_synapse']
-    a_spikes = net["afferent_spike_mon"]
-    presyn_indices = []
-    for i,j in zip(S['i'], S['j']):
-        if j == neuron_index: presyn_indices.append(i)
-    presyn_spike_times= []
-    for n, time in zip(a_spikes['i'], a_spikes['t']):
-        if n in presyn_indices:
-            presyn_spike_times.append(time)
-
-    # print(presyn_spike_times)
-    return presyn_spike_times
-
-
-def pulse_ratio(pickle_file, neuron_type, neuron_index, var):
-    """
-    Compare some variable at spike times to its value at the first spike
-
-    valid neuron_type names = "FS", "SOM", "HVA_PY"
+    Plot a summary figure of the simmulation for the monitors supplied.
     """
 
-    net = unpickle_net(pickle_file)
+    fnt_sz = 12
+    N_sim_conds = len(monitors)
+    N_neuron_groups = len(neuron_names)
+    cm = plt.cm.get_cmap('Vega10')
 
-    spike_times = extract_presynaptic_spikes(pickle_file, neuron_type, neuron_index, net)
-    # print(spike_times)
-    if var == "V":
-        mon = [x[neuron_index]/volt for x in net['{}_V_mon'.format(neuron_type)]['V']]
-    if var == "Ge":
-        mon = [x[neuron_index] for x in net['{}_Ge_total_mon'.format(neuron_type)]['Ge_total']]
-    if var == "Gi":
-        mon = [x[neuron_index] for x in net['{}_Gi_total_mon'.format(neuron_type)]['Gi_total']]
+    if plot_type.lower() == "overlay":
+        fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
+    elif plot_type.lower() == "grid":
+        fig, axs = plt.subplots(N_sim_conds, N_neuron_groups, figsize=(25, 25))
+    else:
+        raise "Unknown plot_type"
 
-    responses = extract_responses(spike_times, mon)
-    PPR = [float(x)/float(responses[0]) for x in responses]
-    print(PPR)
-    return responses
+    for row_idx, sim_type in enumerate(monitors.keys()):
+        for col_idx, neuron_group in enumerate(monitors[sim_type].keys()):
+            tt = monitors[sim_type][neuron_group]['psth']['edges'][0:-1]
+            yy = monitors[sim_type][neuron_group]['psth']['rates']
 
-def extract_responses(spike_times, mon):
-    """
-    time 0 = 0th index
-    1st index = 0.1 ms into simulation
-    if you want value at 400 ms -> 4000 index
-    keep in mind that 400 ms = 0.4 seconds
-    So seconds to index -> seconds x 10000
-    """
+            if plot_type.lower() == "overlay":
+                ax = axs[row_idx]
+            else:
+                ax = axs[row_idx, col_idx]
 
-    # we don't care if there are a bunch of afferents all firing together
-    spike_times = sorted(list(set(spike_times/second)))
-    responses = []
+            # plot (if there are data)
+            if len(yy) > 0:
+                for yy_unit in yy:
+                    ax.plot(tt,
+                            yy_unit,
+                            c=cm.colors[col_idx],
+                            label=neuron_group
+                            )
 
-    for i,t in enumerate(spike_times):
-        # get rid of pesky units
-        t = t/second
-        # use floor in case of precision wackiness
-        spike_index = math.floor(t*10000)
+            # add x/y labels
+            ax.set_ylabel("spk/sec", fontsize=fnt_sz)
+            ax.set_xlabel("time (sec)", fontsize=fnt_sz)
 
-        # get baseline right before spike
-        if t == 0:
-            before = mon[0]
-        else:
-            before = np.mean(np.array(mon[spike_index-10:spike_index+1]))
+            # add title or legend
+            if plot_type.lower() == "overlay":
+                plt.legend()
+            else:
+                if row_idx == 0:
+                    ax.set_title(neuron_group)
 
-        # get max value after the spike
-        if i+ 1 != len(spike_times):
-            next_spike_index = math.floor(spike_times[i+1]*10000)
-            after = max(np.array(mon[spike_index:next_spike_index]))
-        else:
-            after = max(np.array(mon[spike_index:]))
-
-        diff = math.fabs(after - before)
-        responses.append(diff)
-    return responses
-
-def global_peak_trough_ratio(pickle_file, neuron_type, neuron_index):
-    """
-    Find global peak to trough ratio by taking difference of min and max
-    value for the second half of the simulation
-
-    valid neuron_type names = "FS", "SOM", "HVA_PY"
-    """
-
-    net = unpickle_net(pickle_file)
-        # print(net.keys())
-        # print(net['afferent_spike_mon'])
-    if neuron_type == "FS":
-        mon = [x[neuron_index] for x in net['FS_V_mon']['V']]
-    if neuron_type == "SOM":
-        mon = [x[neuron_index] for x in net['SOM_V_mon']['V']]
-    if neuron_type == "HVA_PY":
-        mon = [x[neuron_index] for x in net['HVA_PY_V_mon']['V']]
-
-    plt.title("{} PPR".format(neuron_type))
-    # cut out first half of simulation
-    halfway = len(mon)//2
-    mon = mon[halfway:]
-    max_v = max(mon)
-    min_v = min(mon)
-    peak_to_trough = math.fabs(max_v - min_v)
-    # print(peak_to_trough)
-    return peak_to_trough
-
-
-
-def average_values(pickle_file, value, neuron_type):
-    """
-    valid value names = "Ge", "Gi", "V"
-    valid neuron_type names = "FS", "SOM", "HVA_PY"
-    """
-    net = unpickle_net(pickle_file)
-    if value == 'Ge':
-        key = "{}_Ge_total_mon".format(neuron_type)
-        key2 = "Ge_total"
-    if value == 'Gi':
-        key = "{}_Gi_total_mon".format(neuron_type)
-        key2 = "Gi_total"
-    if value == 'V':
-        key = "{}_V_mon".format(neuron_type)
-        key2 = "V"
-    total_arr = np.array(net[key][key2])
-    averages = np.mean(total_arr, axis=1)
-    print(averages)
-    # print(averages)
-    return averages
-
-
-# CAH put this here, could go elsewhere (or nowhere)
-def visualise_connectivity(S):
-    Ns = len(S.source)
-    Nt = len(S.target)
-    figure(figsize=(10, 4))
-    subplot(121)
-    plot(zeros(Ns), arange(Ns), 'ok', ms=10)
-    plot(ones(Nt), arange(Nt), 'ok', ms=10)
-    for i, j in zip(S.i, S.j):
-        plot([0, 1], [i, j], '-k')
-    xticks([0, 1], ['Source', 'Target'])
-    ylabel('Neuron index')
-    xlim(-0.1, 1.1)
-    ylim(-1, max(Ns, Nt))
-    subplot(122)
-    plot(S.i, S.j, 'ok')
-    xlim(-1, Ns)
-    ylim(-1, Nt)
-    xlabel('Source neuron index')
-    ylabel('Target neuron index')
-    show()
+    plt.show()
+    return
