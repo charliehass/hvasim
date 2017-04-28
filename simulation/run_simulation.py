@@ -17,7 +17,7 @@ from hvasim import run_simulations
 #######################################
 # USER-DEFINE: THE SIMULATION SETTINGS
 # import YYYYYY as sim_settings (YYYYY = sim_settings module name)
-import settings_test_stp_with_real_params as sim_settings
+import settings_sim_for_seminar as sim_settings
 
 
 ######################################
@@ -25,8 +25,8 @@ import settings_test_stp_with_real_params as sim_settings
 ######################################
 description = """
 Testing out the HVA simulation.
-* Re-testing the STP with params that came from the fit of the average
-  data. Average across all cells.
+* trying to find a model run that shows facil=low mod rates
+* and depress=high mod rates
 """
 
 ########################################

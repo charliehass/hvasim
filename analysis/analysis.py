@@ -219,6 +219,7 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
             # add x/y labels
             ax.set_ylabel("spk/sec", fontsize=fnt_sz)
             ax.set_xlabel("time (sec)", fontsize=fnt_sz)
+            ax.set_ylim(0, 300)
 
             # add title or legend
             if plot_type.lower() == "overlay":
