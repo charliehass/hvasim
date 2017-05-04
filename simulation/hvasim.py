@@ -61,7 +61,15 @@ def run_net_and_save(settings_dict, description, sim_data_path, file_num):
     # run the simulation
     net = create_network(settings_dict)
     sim_length = settings_dict["afferents"]["sim_time"]
+
+    # a quick hack to make the simulations run faster for high freq afferents
+    if settings_dict["afferents"]["use_poisson"]:
+        tf = settings_dict["afferents"]["modulation_rate"]
+        sim_length = brian.np.ceil(1 / tf * 5)  # seconds for 5 temp periods
+        sim_length = brian.np.max([sim_length, 2])  # min sim_length is 2 sec
+
     print("  Running network {}".format(file_num))
+    print("    Total simulation time: ", sim_length)
     net.run(sim_length * brian.second)
 
     # save the simulation

@@ -27,6 +27,8 @@ description = """
 Testing out the HVA simulation.
 * trying to find a model run that shows facil=low mod rates
 * and depress=high mod rates
+* making very long model runs to accomodate very slow mod_rates
+* adding a control neuron group that has no plasticity
 """
 
 ########################################

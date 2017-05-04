@@ -6,6 +6,7 @@ import os
 import numpy as np
 import dill as pickle
 import brian2 as brian
+import dpath.util
 
 
 def unpickle(pickle_file):
@@ -103,6 +104,30 @@ def extract_spk_monitors(data_dict, binsize=0.025):
     return monitors, list(set(neuron_names))
 
 
+def extract_afferent_monitors(data_dict, binsize=0.025):
+
+    # store data in dictionary, one for each file
+    monitors = {fname: {} for fname in data_dict.keys()}  # init empty dicts
+    for fname in data_dict.keys():
+        sim_time = data_dict[fname]['settings']['afferents']['sim_time']
+        mon_name = "afferents_spike_mon"
+        net = data_dict[fname]["net"]
+        if mon_name in net.keys():
+            monitors[fname]["afferents"] = {"spk_t": net[mon_name]["t"],
+                                            "unit_idx": net[mon_name]["i"],
+                                            }
+            psths = spk_mon_to_psth(monitors[fname]["afferents"],
+                                    binsize,
+                                    sim_time)
+            monitors[fname]["afferents"]["psth"] = psths
+        else:
+            monitors[fname]["afferents"] = {"dat": np.array([]),
+                                            "time": np.array([]),
+                                            "psth": {}}
+
+    return monitors
+
+
 def spk_mon_to_psth(spk_dict, binsize, total_time):
 
     # define the binedges
@@ -145,7 +170,7 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
         raise "Unknown plot_type"
 
     for row_idx, sim_type in enumerate(monitors.keys()):
-        for col_idx, neuron_group in enumerate(monitors[sim_type].keys()):
+        for col_idx, neuron_group in enumerate(neuron_names):
             tt = monitors[sim_type][neuron_group]['time']
             yy = monitors[sim_type][neuron_group]['dat']
             y_units = brian.get_unit(yy)
@@ -176,8 +201,7 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
                 if row_idx == 0:
                     ax.set_title(neuron_group)
 
-    plt.show()
-    return
+    return fig, ax
 
 
 def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
@@ -198,7 +222,7 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
         raise "Unknown plot_type"
 
     for row_idx, sim_type in enumerate(monitors.keys()):
-        for col_idx, neuron_group in enumerate(monitors[sim_type].keys()):
+        for col_idx, neuron_group in enumerate(neuron_names):
             tt = monitors[sim_type][neuron_group]['psth']['edges'][0:-1]
             yy = monitors[sim_type][neuron_group]['psth']['rates']
 
@@ -228,5 +252,139 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
                 if row_idx == 0:
                     ax.set_title(neuron_group)
 
-    plt.show()
-    return
+    return fig, ax
+
+
+def plot_afferent_rasters(monitors):
+
+    fnt_sz = 12
+    N_sim_conds = len(monitors)
+
+    fig, axs = plt.subplots(N_sim_conds, 1, figsize=(20, 40))
+
+    for row_idx, fid in enumerate(monitors.keys()):
+            tt = monitors[fid]["afferents"]['spk_t']
+            yy = monitors[fid]["afferents"]['unit_idx']
+
+            # only plot a single afferents
+            l_idx_1 = yy == 1
+            yy = yy[l_idx_1]
+            tt = tt[l_idx_1]
+
+            # plot (if there are data)
+            if len(yy) > 0:
+                axs[row_idx].plot(tt, yy, 'k|')
+
+            # add x/y labels
+            axs[row_idx].set_ylabel("afferent idx", fontsize=fnt_sz)
+            axs[row_idx].set_xlabel("time (sec)", fontsize=fnt_sz)
+
+    return fig, axs
+
+
+def calculate_depth_of_mod(time_series, baseline=0, freq=0, samp_freq=1000):
+
+    is_1d = time_series.ndim
+    min_1d = np.min(time_series.shape) == 1
+    assert is_1d or min_1d, "ERROR: incorrect dimensionality of time_series"
+
+    # remove the first second of data
+    # time_series = time_series[int(samp_freq):]
+    n = time_series.size  # len returns 1 for row vec,  .size is more reliable
+
+    # make the time_series a row vector
+    time_series = time_series.reshape(1, n)
+
+    # ditch the units
+    time_series = time_series / brian.get_unit(time_series)
+
+    # need to baseline subtract so that DOM is wrt pre-stim condition
+    time_series = time_series - baseline
+
+    if freq == 0:
+        basis = np.ones((n, 1), dtype=float)
+        dom = np.abs(np.dot(time_series, basis)) / n
+        dom = dom[0]
+    else:
+        tt = np.arange(n) / samp_freq
+        basis = np.exp(-2 * np.pi * np.sqrt(-1 + 0j) * freq * tt)
+        basis.reshape(n, 1)  # column vector
+        time_series_zero_mean = time_series - np.mean(time_series)
+        dom = 2 * np.abs(np.dot(time_series_zero_mean, basis)) / n
+
+    assert len(dom) == 1, "ERROR: output dims not correct"
+    return dom[0]
+
+
+def get_all_dat_dom(monitors, neuron_names, samp_freqs, tf_dict):
+    out = {name: [] for name in neuron_names}  # empty dict for each neuron
+    for i_tf, fid in enumerate(monitors.keys()):
+        for neuron in neuron_names:
+            yy = monitors[fid][neuron]['dat']
+            baseline = yy[0] / brian.get_unit(yy[0])
+            tf = tf_dict[fid]
+            dom = calculate_depth_of_mod(yy,
+                                         baseline=baseline,
+                                         freq=tf,
+                                         samp_freq=samp_freqs[i_tf]
+                                         )
+            out[neuron].append([tf, dom])
+
+    return out
+
+
+def get_looped_param_list(dat_dict, dict_addr):
+    glob_prefix = '{}/settings/{}'
+    globs = [glob_prefix.format(x, dict_addr) for x in dat_dict.keys()]
+    params = [dpath.util.get(dat_dict, x) for x in globs]
+    out_dict = {fid: val for fid,val in zip(dat_dict.keys(), params)}
+    return out_dict
+
+
+def plot_frequency_response(dom_dict, plot_type="overlay"):
+
+    fnt_sz = 12
+    N_neuron_groups = len(dom_dict)
+    cm = plt.cm.get_cmap('Vega10')
+
+    if plot_type.lower() == "overlay":
+        fig, axs = plt.subplots(1, 1, figsize=(10, 10))
+    elif plot_type.lower() == "grid":
+        fig, axs = plt.subplots(1, N_neuron_groups, figsize=(25, 10))
+    else:
+        raise "Unknown plot_type"
+
+    # calculate the depth of modulation for each neuron_type
+    max_yy = 0
+    for col_idx, neuron in enumerate(dom_dict.keys()):
+        dat = np.array(dom_dict[neuron])
+        inds = np.argsort(dat[:, 0], axis=0)
+        ff = dat[inds, 0]
+        amps = dat[inds, 1]
+
+        # fix ff of zero b/c it won't apear on a log plot_type
+        if 0 in ff:
+            zero_idx = ff.tolist().index(0)
+            ff[zero_idx] = ff[zero_idx + 1] / 4
+
+        if plot_type.lower() == "overlay":
+            ax = axs
+        else:
+            ax = axs[col_idx]
+
+        # plot
+        ax.plot(ff, amps, c=cm.colors[col_idx], label=neuron)
+        ax.set_ylabel("depth of mod (V)")
+        ax.set_xlabel("modulation frequency", fontsize=fnt_sz)
+        ax.set_yscale("log")
+        ax.set_xscale("log")
+        max_yy = np.max([np.max(amps), max_yy])
+        ax.set_ylim(0, max_yy * 1.05)
+
+        # add title or legend
+        if plot_type.lower() == "overlay":
+            plt.legend()
+        else:
+            ax.set_title(neuron)
+
+    return fig, ax

@@ -33,16 +33,27 @@ settings = {
             "V_rest": -0.075,
             "refract": 0.0015
         },
+        "CONTROL_PY": {
+            "N": 1,
+            "eqs": neuron_eqs,
+            "tau_m": 0.020,
+            "tau_e": 0.002,
+            "tau_i": 0.010,
+            "thresh": -0.040,
+            "reset": -0.044,
+            "V_rest": -0.075,
+            "refract": 0.0015
+        },
     },
 
     "afferents": {
         "N": 200,
         "use_poisson": True,
-        "modulation_rate": [0, 0.1, 0.5, 1, 2, 4, 8, 16, 32, 64],  # [0, 0.5, 1, 2, 4, 8, 16, 32],
+        "modulation_rate": [0.01, 0.1, 0.2, 0.4, 1, 2, 4, 8, 16, 32, 64, 120],  # [0, 0.5, 1, 2, 4, 8, 16, 32],
         "peak_rate": 100,
         "eqs": sinusoid_rate,
         "spikes_per_second": None,
-        "sim_time": 3
+        "sim_time": 5
     },
 
     "synapses": {
@@ -79,11 +90,29 @@ settings = {
             "w_i": 0,
             "delay": 0
         },
+
+        ("afferents", "CONTROL_PY"): {
+            "eqs": synapse_eqs,
+            "on_spike": onspike_eqs,
+            "p_connect": 1,
+            "d1": 1,
+            "d2": 1,
+            "f1": 0,
+            "f2": 0,
+            "tau_D1": 1,
+            "tau_D2": 1,
+            "tau_F1": 1,
+            "tau_F2": 1,
+            "w_e": 0.0025,
+            "w_i": 0,
+            "delay": 0
+        },
     },
 
     "monitors": {
         "MED_PY": 'V Ge_total Gi_total spikes',
         "LAT_PY": 'V Ge_total Gi_total spikes',
+        "CONTROL_PY": 'V Ge_total Gi_total spikes',
         "afferents": 'spikes'
     }
 }
