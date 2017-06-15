@@ -122,7 +122,7 @@ def find_param_lists_dict_walker(runtime_dict, dpath_list=None, addr=None):
 
 
 # test directories for find_param_list. Some should fail the assert tests
-d_listsss = {
+test_d_listsss = {
     'one': [1, 2, 3, 4],
     'two': {'a': [1, 2, 3],
             'b': 'one',
@@ -145,7 +145,7 @@ d_listsss = {
              }
 }
 
-d_tuple = {
+test_d_tuple = {
     'one': 1,
     'two': {'a': 2,
             'b': 'one',
@@ -168,7 +168,7 @@ d_tuple = {
              }
 }
 
-d_good = {
+test_d_good = {
     'one': 1,
     'two': {'a': 2,
             'b': 'one',
@@ -191,7 +191,7 @@ d_good = {
              }
 }
 
-d_none = {
+test_d_none = {
     'one': 1,
     'two': {'a': 2,
             'b': 'one',

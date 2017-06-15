@@ -17,27 +17,27 @@ from hvasim import run_simulations
 #######################################
 # USER-DEFINE: THE SIMULATION SETTINGS
 # import YYYYYY as sim_settings (YYYYY = sim_settings module name)
-import settings_sim_for_seminar as sim_settings
+import settings_sim_ff_hva_only_real_params as sim_settings
 
 
 ######################################
 # USER-DEFINE: ENTER A  DESCRIPTION  #
 ######################################
 description = """
-Testing out the HVA simulation.
-* trying to find a model run that shows facil=low mod rates
-* and depress=high mod rates
-* making very long model runs to accomodate very slow mod_rates
-* adding a control neuron group that has no plasticity
+Test: relationship b/w peak firing rates and TF filtering
+* peak rate set to 50 Hz
+* passive props and W_e identical for HVA neurons
+* STP dynamic variable as fit from CH's data (6/12/2017)
 """
 
 ########################################
 # USER-DEFINE: PATH TO DATA DIRECTORY  #
 ########################################
-dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
-# dat_path = "/home/charlie/Desktop/hva_sim_data"
+dat_path_mac = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
+dat_path_linux = "/home/charlie/Desktop/hva_sim_data"
+dat_path_nuke = "C:\\Users\charlie\\Desktop\\hva_sim_data"
 
 ###################################
 # DON'T MESS WITH THE STUFF BELOW #
 ###################################
-run_simulations(sim_settings.settings, description, dat_path)
+run_simulations(sim_settings.settings, description, dat_path_nuke)

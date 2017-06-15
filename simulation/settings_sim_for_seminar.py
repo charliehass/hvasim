@@ -1,8 +1,9 @@
 """Settings for feedforward Network.
 
-These settings are for a network of FF excitation only. No interneurons.
-
-Parameters for plasticity were drawn from Charlie's data (4/2017)
+These settings are for a network of FF excitation only.
+* No interneurons.
+* Parameters for plasticity were drawn from literature
+* Passive props same for all postsynaptic cells
 
 """
 
@@ -49,8 +50,8 @@ settings = {
     "afferents": {
         "N": 200,
         "use_poisson": True,
-        "modulation_rate": [0.01, 0.1, 0.2, 0.4, 1, 2, 4, 8, 16, 32, 64, 120],  # [0, 0.5, 1, 2, 4, 8, 16, 32],
-        "peak_rate": 100,
+        "modulation_rate": [0.01, 0.1, 0.2, 0.4, 1, 2, 4, 8, 16, 32, 64],  # [0, 0.5, 1, 2, 4, 8, 16, 32],
+        "peak_rate": 12,
         "eqs": sinusoid_rate,
         "spikes_per_second": None,
         "sim_time": 5
