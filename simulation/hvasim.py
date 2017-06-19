@@ -1,3 +1,6 @@
+# Need to :
+#  * create afferents each with a different synapse types
+#  * create a way to sample with replacement from my dataset
 
 # import standard stuff
 import brian2 as brian
