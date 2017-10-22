@@ -1,8 +1,10 @@
 """Settings for feedforward Network.
 
-These settings are for a network of FF excitation only. No interneurons.
-
-Parameters for plasticity were drawn from Charlie's data (4/2017)
+These settings are for a network of FF excitation only.
+* No interneurons.
+* Parameters for plasticity were estimated from CH's experiments using the
+  fit to the grand average raw data. 6/12/2017
+* Passive props same for all postsynaptic cells
 
 """
 
@@ -25,157 +27,94 @@ settings = {
         "LAT_PY": {
             "N": 1,
             "eqs": neuron_eqs,
-            "tau_m": 0.015,
-            "tau_e": 0.002,
-            "tau_i": 0.010,
-            "thresh": -0.040,
-            "reset": -0.048,
-            "V_rest": -0.075,
-            "refract": 0.0015
-        },
-        "HVA_PV": {
-            "N": 1,  # set to 100 for full model
-            "eqs": neuron_eqs,
-            "tau_m": 0.010,
-            "tau_e": 0.002,
-            "tau_i": 0.010,
-            "thresh": -0.040,
-            "reset": -0.042,
-            "V_rest": -0.070,
-            "refract": 0.005
-        },
-        "HVA_SOM": {
-            "N": 1,  # set to 100 for full model
-            "eqs": neuron_eqs,
-            "tau_m": 0.025,
+            "tau_m": 0.020,
             "tau_e": 0.002,
             "tau_i": 0.010,
             "thresh": -0.040,
             "reset": -0.044,
-            "V_rest": -0.065,
-            "refract": 0.010
+            "V_rest": -0.075,
+            "refract": 0.0015
+        },
+        "CONTROL_PY": {
+            "N": 1,
+            "eqs": neuron_eqs,
+            "tau_m": 0.020,
+            "tau_e": 0.002,
+            "tau_i": 0.010,
+            "thresh": -0.040,
+            "reset": -0.044,
+            "V_rest": -0.075,
+            "refract": 0.0015
         },
     },
 
     "afferents": {
-        "N": 10000,
+        "N": 200,
         "use_poisson": True,
-        "modulation_rate": 0,  # [0, 0.5, 1, 2, 4, 8, 16, 32]
-        "peak_rate": 20,
+        "modulation_rate": [0.01, 0.1, 0.2, 0.4, 1, 2, 4, 8, 16, 32, 64],  # [0, 0.5, 1, 2, 4, 8, 16, 32],
+        "peak_rate": 50,
         "eqs": sinusoid_rate,
         "spikes_per_second": None,
-        "sim_time": 3
+        "sim_time": 5
     },
 
     "synapses": {
-        ("afferents", "MED_PY"): {
-            "eqs": synapse_eqs,
-            "on_spike": onspike_eqs,
-            "p_connect": 0.1,
-            "d1": 0.749467099783301,
-            "d2": 0.700437181519722,
-            "f1": 1.13807720160064,
-            "f2": 0.0483709364290671,
-            "tau_D1": 0.365734211868718,
-            "tau_D2": 0.0400001490139746,
-            "tau_F1": 0.112433824472314,
-            "tau_F2": 4.99813893799875,
-            "w_e": 0,
-            "w_i": 0,
-            "delay": 0.002
-        },
-
         ("afferents", "LAT_PY"): {
             "eqs": synapse_eqs,
             "on_spike": onspike_eqs,
-            "p_connect": 0.10,
-            "d1": 0.713289167753535,
-            "d2": 0.61815647916645,
-            "f1": 0.0625555392792278,
-            "f2": 1.08228513737162,
-            "tau_D1": 0.312011074654424,
-            "tau_D2": 0.0400023180322909,
-            "tau_F1": 0.887175955605229,
-            "tau_F2": 0.0904394937105904,
-            "w_e": 0,
+            "p_connect": 1,
+            "d1": 0.745776372204423,
+            "d2": 0.384630322243764,
+            "f1": 0.20171125824736,
+            "f2": 1.99996992031001,
+            "tau_D1": 0.408571779798192,
+            "tau_D2": 0.0782562829011947,
+            "tau_F1": 0.526480048225554,
+            "tau_F2": 0.0611956230085695,
+            "w_e": 0.0025,
             "w_i": 0,
-            "delay": 0.002
+            "delay": 0
         },
 
-        ("afferents", "HVA_PV"): {
+        ("afferents", "MED_PY"): {
             "eqs": synapse_eqs,
             "on_spike": onspike_eqs,
-            "p_connect": 0.20,
-            "d1": 0.473617339960491,
-            "d2": 0.696307735155633,
-            "f1": 0.919868184041437,
-            "f2": 0.688201290212496,
-            "tau_D1": 0.138803522289082,
-            "tau_D2": 0.570740671744164,
-            "tau_F1": 0.072675501828418,
-            "tau_F2": 0.31581325424265,
-            "w_e": [0.006, 0.007, 0.008, 0.009, 0.010, 0.011],
+            "p_connect": 1,
+            "d1": 0.57033797518005,
+            "d2": 0.877343800497582,
+            "f1": 0.24791793329521,
+            "f2": 1.24055971861832,
+            "tau_D1": 0.193759182770654,
+            "tau_D2": 1.26678114645274,
+            "tau_F1": 1.18578349080901,
+            "tau_F2": 0.1027449281392,
+            "w_e": 0.0025,
             "w_i": 0,
-            "delay": 0.002
+            "delay": 0
         },
 
-        ("afferents", "HVA_SOM"): {
+        ("afferents", "CONTROL_PY"): {
             "eqs": synapse_eqs,
             "on_spike": onspike_eqs,
-            "p_connect": 0.20,
+            "p_connect": 1,
             "d1": 1,
-            "d2": 0.835599557217797,
-            "f1": 1.27821374452506,
-            "f2": 0.278540399084653,
-            "tau_D1": 2.42301768011074,
-            "tau_D2": 0.0784851537484495,
-            "tau_F1": 1.27821374452506,
-            "tau_F2": 0.278540399084653,
-            "w_e": 0,
+            "d2": 1,
+            "f1": 0,
+            "f2": 0,
+            "tau_D1": 1,
+            "tau_D2": 1,
+            "tau_F1": 1,
+            "tau_F2": 1,
+            "w_e": 0.0025,
             "w_i": 0,
-            "delay": 0.002
-        },
-
-        ("HVA_PV", "LAT_PY"): {
-            "eqs": synapse_eqs,
-            "on_spike": onspike_eqs,
-            "p_connect": 1,  # set to 40% for real model
-            "d1": 0.473617339960491,
-            "d2": 0.696307735155633,
-            "f1": 0.919868184041437,
-            "f2": 0.688201290212496,
-            "tau_D1": 0.138803522289082,
-            "tau_D2": 0.570740671744164,
-            "tau_F1": 0.072675501828418,
-            "tau_F2": 0.31581325424265,
-            "w_e": 0,
-            "w_i": 0.025,
-            "delay": 0.002
-        },
-
-        ("HVA_PV", "MED_PY"): {
-            "eqs": synapse_eqs,
-            "on_spike": onspike_eqs,
-            "p_connect": 1,  # set to 40% for real model
-            "d1": 0.473617339960491,
-            "d2": 0.696307735155633,
-            "f1": 0.919868184041437,
-            "f2": 0.688201290212496,
-            "tau_D1": 0.138803522289082,
-            "tau_D2": 0.570740671744164,
-            "tau_F1": 0.072675501828418,
-            "tau_F2": 0.31581325424265,
-            "w_e": 0,
-            "w_i": 0.025,
-            "delay": 0.002
+            "delay": 0
         },
     },
 
     "monitors": {
         "MED_PY": 'V Ge_total Gi_total spikes',
         "LAT_PY": 'V Ge_total Gi_total spikes',
-        "HVA_PV": 'V Ge_total spikes',
-        "HVA_SOM": 'V Ge_total spikes',
+        "CONTROL_PY": 'V Ge_total Gi_total spikes',
         "afferents": 'spikes'
     }
 }

@@ -104,26 +104,31 @@ def extract_spk_monitors(data_dict, binsize=0.025):
     return monitors, list(set(neuron_names))
 
 
-def extract_afferent_monitors(data_dict, binsize=0.025):
+def extract_afferent_monitors(data_dict, binsize=0.100):
 
     # store data in dictionary, one for each file
     monitors = {fname: {} for fname in data_dict.keys()}  # init empty dicts
     for fname in data_dict.keys():
-        sim_time = data_dict[fname]['settings']['afferents']['sim_time']
+        # initialize the dict for fname'th sim file
+        monitors[fname]["afferents"] = {"unit_idx": np.array([]),
+                                        "spk_t": np.array([]),
+                                        "psth": {},
+                                        "params": {}}
+
         mon_name = "afferents_spike_mon"
         net = data_dict[fname]["net"]
         if mon_name in net.keys():
-            monitors[fname]["afferents"] = {"spk_t": net[mon_name]["t"],
-                                            "unit_idx": net[mon_name]["i"],
-                                            }
+            monitors[fname]["afferents"]['params'] = data_dict[fname]['settings']['afferents']
+            monitors[fname]["afferents"]["spk_t"] = net[mon_name]["t"]
+            monitors[fname]["afferents"]["unit_idx"] = net[mon_name]["i"]
+
+            sim_time = data_dict[fname]['settings']['afferents']['sim_time']
+            sim_time = np.int(np.round(np.max(monitors[fname]["afferents"]["spk_t"])))
+            print("hack for sim_time: ", sim_time)
             psths = spk_mon_to_psth(monitors[fname]["afferents"],
                                     binsize,
                                     sim_time)
             monitors[fname]["afferents"]["psth"] = psths
-        else:
-            monitors[fname]["afferents"] = {"dat": np.array([]),
-                                            "time": np.array([]),
-                                            "psth": {}}
 
     return monitors
 
@@ -160,7 +165,7 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
     fnt_sz = 12
     N_sim_conds = len(monitors)
     N_neuron_groups = len(neuron_names)
-    cm = plt.cm.get_cmap('Vega10')
+    cm = plt.cm.get_cmap('tab10')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
@@ -196,15 +201,16 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
 
             # add title or legend
             if plot_type.lower() == "overlay":
-                plt.legend()
+                if row_idx == 0:
+                    ax.legend()
             else:
                 if row_idx == 0:
                     ax.set_title(neuron_group)
 
-    return fig, ax
+    return fig, axs
 
 
-def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
+def plot_spk_summary(monitors, neuron_names, plot_type="overlay", average=True):
     """
     Plot a summary figure of the simmulation for the monitors supplied.
     """
@@ -212,7 +218,7 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
     fnt_sz = 12
     N_sim_conds = len(monitors)
     N_neuron_groups = len(neuron_names)
-    cm = plt.cm.get_cmap('Vega10')
+    cm = plt.cm.get_cmap('tab10')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
@@ -233,12 +239,14 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
 
             # plot (if there are data)
             if len(yy) > 0:
-                for yy_unit in yy:
-                    ax.plot(tt,
-                            yy_unit,
-                            c=cm.colors[col_idx],
-                            label=neuron_group
-                            )
+                if average:
+                    ax.plot(tt, np.mean(yy, axis=0), c=cm.colors[col_idx])
+                else:
+                    for yy_unit in yy:
+                        ax.plot(tt,
+                                yy_unit,
+                                c=cm.colors[col_idx]
+                                )
 
             # add x/y labels
             ax.set_ylabel("spk/sec", fontsize=fnt_sz)
@@ -247,12 +255,13 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay"):
 
             # add title or legend
             if plot_type.lower() == "overlay":
-                plt.legend()
+                #plt.legend()
+                pass
             else:
                 if row_idx == 0:
                     ax.set_title(neuron_group)
 
-    return fig, ax
+    return fig, axs
 
 
 def plot_afferent_rasters(monitors):
@@ -345,7 +354,7 @@ def plot_frequency_response(dom_dict, plot_type="overlay"):
 
     fnt_sz = 12
     N_neuron_groups = len(dom_dict)
-    cm = plt.cm.get_cmap('Vega10')
+    cm = plt.cm.get_cmap('tab10')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(1, 1, figsize=(10, 10))

@@ -67,6 +67,7 @@ def run_net_and_save(settings_dict, description, sim_data_path, file_num):
         tf = settings_dict["afferents"]["modulation_rate"]
         sim_length = brian.np.ceil(1 / tf * 5)  # seconds for 5 temp periods
         sim_length = brian.np.max([sim_length, 2])  # min sim_length is 2 sec
+        settings_dict["afferents"]["sim_time"] = sim_length
 
     print("  Running network {}".format(file_num))
     print("    Total simulation time: ", sim_length)
