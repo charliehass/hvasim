@@ -17,7 +17,7 @@ from hvasim import run_simulations
 #######################################
 # USER-DEFINE: THE SIMULATION SETTINGS
 # import YYYYYY as sim_settings (YYYYY = sim_settings module name)
-import settings_sim_for_seminar as sim_settings
+import settings_test_stp as sim_settings
 
 
 ######################################
@@ -34,7 +34,7 @@ Testing out the HVA simulation.
 ########################################
 # USER-DEFINE: PATH TO DATA DIRECTORY  #
 ########################################
-dat_path = "/Users/charliehass/Dropbox/Duke on Dropbox/hva_sim_data"
+dat_path = "/Users/charliehass/Box Sync/Syncd Lab Stuff/hva_sim_data"
 # dat_path = "/home/charlie/Desktop/hva_sim_data"
 
 ###################################
