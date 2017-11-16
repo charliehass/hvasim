@@ -165,12 +165,17 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
     fnt_sz = 12
     N_sim_conds = len(monitors)
     N_neuron_groups = len(neuron_names)
-    cm = plt.cm.get_cmap('tab10')
+    cm = plt.cm.get_cmap('Dark2')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
     elif plot_type.lower() == "grid":
-        fig, axs = plt.subplots(N_sim_conds, N_neuron_groups, figsize=(25, 25))
+        width = 25
+        height = 5 * N_sim_conds
+        fig, axs = plt.subplots(N_sim_conds,
+                                N_neuron_groups,
+                                figsize=(width, height)
+                                )
     else:
         raise "Unknown plot_type"
 
@@ -179,13 +184,18 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
             tt = monitors[sim_type][neuron_group]['time']
             yy = monitors[sim_type][neuron_group]['dat']
             y_units = brian.get_unit(yy)
-            if y_units == brian.units.allunits.steradian3:
-                y_units = "conductance"
+            yy * y_units  # backout the units
 
             if plot_type.lower() == "overlay":
-                ax = axs[row_idx]
+                if N_sim_conds == 1:
+                    ax = axs
+                else:
+                    ax = axs[row_idx]
             else:
-                ax = axs[row_idx, col_idx]
+                if N_sim_conds == 1:
+                    ax = axs[col_idx]
+                else:
+                    ax = axs[row_idx, col_idx]
 
             # plot
             ax.plot(tt, yy, c=cm.colors[col_idx], label=neuron_group)
@@ -193,10 +203,11 @@ def plot_anlg_summary(monitors, neuron_names, plot_type="overlay"):
             ax.set_xlabel("time (sec)", fontsize=fnt_sz)
 
             # add y units
+            ax.set_ylabel(y_units)
             if y_units == brian.volt:
-                # ax.set_ylim(-0.077, -0.040)
+                #  ax.set_ylim(-0.070, -0.058)
                 pass
-            elif y_units == "conductance":
+            elif y_units == brian.siemens:
                 pass
 
             # add title or legend
@@ -218,12 +229,17 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay", average=True):
     fnt_sz = 12
     N_sim_conds = len(monitors)
     N_neuron_groups = len(neuron_names)
-    cm = plt.cm.get_cmap('tab10')
+    cm = plt.cm.get_cmap('Dark2')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(N_sim_conds, 1, figsize=(10, 25))
     elif plot_type.lower() == "grid":
-        fig, axs = plt.subplots(N_sim_conds, N_neuron_groups, figsize=(25, 25))
+        width = 25
+        height = 5 * N_sim_conds
+        fig, axs = plt.subplots(N_sim_conds,
+                                N_neuron_groups,
+                                figsize=(width, height)
+                                )
     else:
         raise "Unknown plot_type"
 
@@ -233,9 +249,15 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay", average=True):
             yy = monitors[sim_type][neuron_group]['psth']['rates']
 
             if plot_type.lower() == "overlay":
-                ax = axs[row_idx]
+                if N_sim_conds == 1:
+                    ax = axs
+                else:
+                    ax = axs[row_idx]
             else:
-                ax = axs[row_idx, col_idx]
+                if N_sim_conds == 1:
+                    ax = axs[col_idx]
+                else:
+                    ax = axs[row_idx, col_idx]
 
             # plot (if there are data)
             if len(yy) > 0:
@@ -251,15 +273,57 @@ def plot_spk_summary(monitors, neuron_names, plot_type="overlay", average=True):
             # add x/y labels
             ax.set_ylabel("spk/sec", fontsize=fnt_sz)
             ax.set_xlabel("time (sec)", fontsize=fnt_sz)
-            ax.set_ylim(0, 300)
 
             # add title or legend
             if plot_type.lower() == "overlay":
-                #plt.legend()
+                # plt.legend()
                 pass
             else:
                 if row_idx == 0:
                     ax.set_title(neuron_group)
+
+    return fig, axs
+
+
+def plot_hva_rasters(monitors, neuron_names):
+    """
+    Plot a summary figure of the simmulation for the monitors supplied.
+    """
+
+    fnt_sz = 12
+    N_sim_conds = len(monitors)
+    N_neuron_groups = len(neuron_names)
+    cm = plt.cm.get_cmap('Dark2')
+
+    # set up the figure
+    width = 25
+    height = 5 * N_sim_conds
+    fig, axs = plt.subplots(N_sim_conds,
+                            N_neuron_groups,
+                            figsize=(width, height)
+                            )
+
+    for row_idx, sim_type in enumerate(monitors.keys()):
+        for col_idx, neuron_group in enumerate(neuron_names):
+            tt = monitors[sim_type][neuron_group]['spk_t']
+            yy = monitors[sim_type][neuron_group]['unit_idx']
+
+            if N_sim_conds == 1:
+                ax = axs[col_idx]
+            else:
+                ax = axs[row_idx, col_idx]
+
+            # plot (if there are data)
+            if len(yy) > 0:
+                ax.plot(tt, yy, '|', c=cm.colors[col_idx])
+
+            # add x/y labels
+            ax.set_ylabel("unit number", fontsize=fnt_sz)
+            ax.set_xlabel("time (sec)", fontsize=fnt_sz)
+
+            # add title or legend
+            if row_idx == 0:
+                ax.set_title(neuron_group)
 
     return fig, axs
 
@@ -274,11 +338,6 @@ def plot_afferent_rasters(monitors):
     for row_idx, fid in enumerate(monitors.keys()):
             tt = monitors[fid]["afferents"]['spk_t']
             yy = monitors[fid]["afferents"]['unit_idx']
-
-            # only plot a single afferents
-            l_idx_1 = yy == 1
-            yy = yy[l_idx_1]
-            tt = tt[l_idx_1]
 
             # plot (if there are data)
             if len(yy) > 0:
@@ -346,7 +405,7 @@ def get_looped_param_list(dat_dict, dict_addr):
     glob_prefix = '{}/settings/{}'
     globs = [glob_prefix.format(x, dict_addr) for x in dat_dict.keys()]
     params = [dpath.util.get(dat_dict, x) for x in globs]
-    out_dict = {fid: val for fid,val in zip(dat_dict.keys(), params)}
+    out_dict = {fid: val for fid, val in zip(dat_dict.keys(), params)}
     return out_dict
 
 
@@ -354,7 +413,7 @@ def plot_frequency_response(dom_dict, plot_type="overlay"):
 
     fnt_sz = 12
     N_neuron_groups = len(dom_dict)
-    cm = plt.cm.get_cmap('tab10')
+    cm = plt.cm.get_cmap('Dark2')
 
     if plot_type.lower() == "overlay":
         fig, axs = plt.subplots(1, 1, figsize=(10, 10))

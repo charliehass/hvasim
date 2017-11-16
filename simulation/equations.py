@@ -19,6 +19,19 @@ neuron_eqs = '''
     '''
 
 
+neuron_eqs_with_Rin = '''
+    dV/dt = (V0 - V + (R_in * (Ge_total*(Ve - V) + Gi_total*(Vi - V))))/tau_m : volt
+    dGe_total/dt = (-Ge_total)/tau_e_model : siemens
+    dGi_total/dt = (-Gi_total)/tau_i_model : siemens
+    tau_m : second
+    R_in : ohm
+    tau_e_model : second
+    tau_i_model : second
+    Ve : volt
+    Vi : volt
+    V0 : volt
+    '''
+
 # Each synapse has its own depression factor. More than one depression constant
 # may be used. For example, a slow factor (for contrast adaptation)
 # and a fast factor (for temporal nonlinearities).
@@ -38,8 +51,8 @@ synapse_eqs = '''
     d2 : 1
     f1 : 1
     f2 : 1
-    w_e : 1
-    w_i : 1
+    w_e : siemens
+    w_i : siemens
      '''
 
 # On spikes the excitatory and inhibitory conductance from each

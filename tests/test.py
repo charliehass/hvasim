@@ -11,7 +11,7 @@ def find_neuron_with_name(neuron_array, str_name):
         if n.name == str_name: return n
     print("Neuron not in this list")
     return None
-    
+
 thal_model='''
         rates = peak_rate*sin(2*pi*t*modulation_rate/second)*Hz : Hz
         modulation_rate : 1
@@ -25,7 +25,7 @@ neurons = [0]*len(params)
 
 x = 0
 for key, val in params.items():
-    
+
     neurons[x] = NeuronGroup(1, model=val, name=key)
     neurons[x].V0 = -0.07*volt
     print(neurons[x].V0)
@@ -47,12 +47,6 @@ for s in syns:
     pre_neuron = find_neuron_with_name(neurons, pre_neuron_name)
     post_neuron_name = s[1]
     post_neuron = find_neuron_with_name(neurons, post_neuron_name)
-    created_syns[k] = Synapses(pre_neuron, post_neuron, model=synapse_eqs, 
+    created_syns[k] = Synapses(pre_neuron, post_neuron, model=synapse_eqs,
             name="{}_{}_synapse".format(pre_neuron_name, post_neuron_name))
     k += 1
-
-print(created_syns)
-
-
-
-    

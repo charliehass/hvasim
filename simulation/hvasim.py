@@ -8,7 +8,6 @@ import time
 
 # import from within this codebase
 from make_run_settings import create_run_settings_no_enforce
-import settings_default
 
 
 def run_simulations(sim_settings, description, dat_path):
@@ -171,6 +170,7 @@ def create_neurons(neuron_params):
                                            name=neuron
                                            )
         neuron_list[i].tau_m = vals["tau_m"] * brian.second
+        neuron_list[i].R_in = vals["R_in"] * brian.Mohm
         neuron_list[i].tau_e_model = vals["tau_e"] * brian.second
         neuron_list[i].tau_i_model = vals["tau_i"] * brian.second
         neuron_list[i].V = v_init * brian.volt
@@ -261,13 +261,13 @@ def create_synapses(synapse_params, neurons):
         created_syns[-1].tau_F1 = variables["tau_F1"] * brian.second
         created_syns[-1].tau_D2 = variables["tau_D2"] * brian.second
         created_syns[-1].tau_F2 = variables["tau_F2"] * brian.second
-        created_syns[-1].w_e = variables["w_e"]
-        created_syns[-1].w_i = variables["w_i"]
+        created_syns[-1].w_e = variables["w_e"] * brian.psiemens
+        created_syns[-1].w_i = variables["w_i"] * brian.psiemens
+        created_syns[-1].delay = variables["delay"] * brian.second
         created_syns[-1].D1 = 1
         created_syns[-1].D2 = 1
         created_syns[-1].F1 = 1
         created_syns[-1].F2 = 1
-        # TODO: Add the synaptic delay
 
     return created_syns
 
